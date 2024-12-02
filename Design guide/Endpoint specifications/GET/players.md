@@ -7,13 +7,13 @@ Player rankings page, to display a table with rows containing a player's first/l
 ## URL parameters
 
 ### page
-(optional) Which page to get.
+_(optional)_ Which page to get.
 
 ### per_page
-(optional) Number of records per page. Default value is 100.
+_(optional)_ Number of records per page. Default value is 100.
 
 ### score_limit_2025
-(optional) Minimum score for the player to be shown (default value = 0). Any player with a score lower than this parameter should not be included in the return data.
+_(optional)_ Minimum score for the player to be shown (default value = 0). Any player with a score lower than this parameter should not be included in the return data.
 
 ## Request body
 N/A
@@ -30,32 +30,31 @@ HTTP 200
 GET `https://riichi.ca/api/v1/players?page=2&per_page=100`
 ```json
 {
-	"metadata":
-	{
-		"score_limit_2025": 0,
-		"page": 2,
-		"per_page": 100,
-		"page_count": 5,
-		"total_count": 465,
-		"links": [
-			{"self": "/players?page=2&per_page=100"},
-	        {"first": "/players?page=1&per_page=100"},
-	        {"previous": "/players?page=1&per_page=100"},
-	        {"next": "/players?page=3&per_page=100"},
-	        {"last": "/players?page=5&per_page=100"}
-		]
-	},
-	"records": [
-		{
-			"id": 101,
-			"first_name": "Loïc",
-			"last_name": "Roberge",
-			"region": 1,
-			"club": 1,
-			"score_2025_cycle": 4937.11
-		},
-		...
-	]
+  "metadata": {
+    "score_limit_2025": 0,
+    "page": 2,
+    "per_page": 100,
+    "page_count": 5,
+    "total_count": 465,
+    "links": [
+      {"self": "/players?page=2&per_page=100"},
+      {"first": "/players?page=1&per_page=100"},
+      {"previous": "/players?page=1&per_page=100"},
+      {"next": "/players?page=3&per_page=100"},
+      {"last": "/players?page=5&per_page=100"}
+    ]
+  },
+  "records": [
+    {
+      "id": 101,
+      "first_name": "Loïc",
+      "last_name": "Roberge",
+      "region": 1,
+      "club": 1,
+      "score_2025_cycle": 4937.11
+    },
+    ...
+  ]
 }
 ```
 
@@ -65,35 +64,56 @@ GET `https://riichi.ca/api/v1/players?page=2&per_page=100`
 Unexpected URL parameters
 ```json
 {
-	"message": "Unexpected URL parameter {parameter}"
+  "error": {
+    "code": 400,
+    "type": "Bad Request",
+    "message": "Unexpected URL parameter",
+    "parameters": ["{param1}", "{param2}"]
+  }
 }
 ```
 
 Request body is not empty
 ```json
 {
-	"message": "Unexpected request body"
+  "error": {
+    "code": 400,
+    "type": "Bad Request",
+    "message": "Unexpected request body (must be empty)"
+  }
 }
 ```
 
 `page` is a non-integer, or below 1
 ```json
 {
-	"message": "'page' parameter must be an integer greater than 0"
+  "error": {
+    "code": 400,
+    "type": "Bad Request", 
+    "message": "'page' parameter must be an integer greater than 0"
+  }
 }
 ```
 
 `per_page` is a non-integer, or below 1
 ```json
 {
-	"message": "'per_page' parameter must be an integer greater than 0"
+  "error": {
+    "code": 400,
+    "type": "Bad Request", 
+    "message": "'per_page' parameter must be an integer greater than 0"
+  }
 }
 ```
 
 `score_limit_2025` is not a number between 0 and 6000
 ```json
 {
-	"message": "'score_limit_2025' parameter must be a number between 0 and 6000"
+  "error": {
+    "code": 400,
+    "type": "Bad Request", 
+    "message": "'score_limit_2025' parameter must be a number between 0 and 6000"
+  }
 }
 ```
 
@@ -101,7 +121,22 @@ Request body is not empty
 Not using the basic "non-admin" API key
 ```json
 {
-	"message": "Unauthorized"
+  "error": {
+    "code": 401,
+    "type": "Unauthorized",
+    "message": "An API key is required to access this endpoint"
+  }
+}
+```
+
+Provided API key is invalid
+```json
+{
+  "error": {
+    "code": 401,
+    "type": "Unauthorized",
+    "message": "Provided API key is invalid"
+  }
 }
 ```
 
@@ -109,14 +144,22 @@ Not using the basic "non-admin" API key
 Client tries to go to page X+1 or greater when there are only X pages
 ```json
 {
-	"message": "Page not found"
+  "error": {
+    "code": 404,
+    "type": "Not Found",
+    "message": "Page {page} not found"
+  }
 }
 ```
 
 No player found with score greater than or equal to value of `score_limit_2025`
 ```json
 {
-	"message": "No player found with 2025 score greater than or equal to {score_limit_2025}"
+  "error": {
+    "code": 404,
+    "type": "Not Found",
+    "message": "No player found with 2025 score greater than or equal to {score_limit_2025}"
+  }
 }
 ```
 
@@ -124,7 +167,14 @@ No player found with score greater than or equal to value of `score_limit_2025`
 For anything that isn't GET
 ```json
 {
-	"message": "Method is not allowed"
+  "error": {
+    "code": 405,
+    "type": "Method Not Allowed",
+    "message": "Requested method {method} is not allowed for this endpoint.",
+    "allowed_methods": [
+      "GET"
+    ]
+  }
 }
 ```
 
@@ -132,14 +182,28 @@ For anything that isn't GET
 If the client can't accept JSON
 ```json
 {
-	"message": "Only 'application/json' content type is supported"
+  "error": {
+    "code": 406,
+    "type": "Not Acceptable",
+    "message": "Requested content type is not supported",
+    "supported_types": [
+      "application/json"
+    ]
+  }
 }
 ```
 
 ### 429 Too Many Requests
-Gonna have to look into rate limiting...
+If the documents don't yet specify how rate limiting will work for this API,
+feel free to @ the author of these lines with your complaints.
 ```json
 {
-	"message": "Too many requests! Try again later."
+  "error": {
+    "code": 429,
+    "type": "Too Many Requests",
+    "message": "You have exceeded the allowed number of requests. Please try again later.",
+    "retry_after": 60,
+    "limit": 100
+  }
 }
 ```

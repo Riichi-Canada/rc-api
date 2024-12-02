@@ -19,8 +19,8 @@ HTTP 200
 GET `https://riichi.ca/api/v1/regions/14`
 ```json
 {
-	"id": 14,
-	"region": "United States"
+  "id": 14,
+  "region": "United States"
 }
 ```
 
@@ -30,14 +30,23 @@ GET `https://riichi.ca/api/v1/regions/14`
 Unexpected URL parameters
 ```json
 {
-	"message": "Unexpected URL parameter {parameter}"
+  "error": {
+    "code": 400,
+    "type": "Bad Request",
+    "message": "Unexpected URL parameter",
+    "parameters": ["{param1}", "{param2}"]
+  }
 }
 ```
 
 Request body is not empty
 ```json
 {
-	"message": "Unexpected request body"
+  "error": {
+    "code": 400,
+    "type": "Bad Request",
+    "message": "Unexpected request body (must be empty)"
+  }
 }
 ```
 
@@ -45,15 +54,35 @@ Request body is not empty
 Not using the basic "non-admin" API key
 ```json
 {
-	"message": "Unauthorized"
+  "error": {
+    "code": 401,
+    "type": "Unauthorized",
+    "message": "An API key is required to access this endpoint"
+  }
+}
+```
+
+Provided API key is invalid
+```json
+{
+  "error": {
+    "code": 401,
+    "type": "Unauthorized",
+    "message": "Provided API key is invalid"
+  }
 }
 ```
 
 ### 404 Not Found
 Self-explanatory
+
 ```json
 {
-	"message": "No data found at id {region_id}"
+  "error": {
+    "code": 404,
+    "type": "Not Found",
+    "message": "No region with id {region_id}"
+  },
 }
 ```
 
@@ -61,7 +90,14 @@ Self-explanatory
 For anything that isn't GET
 ```json
 {
-	"message": "Method is not allowed"
+  "error": {
+    "code": 405,
+    "type": "Method Not Allowed",
+    "message": "Requested method {method} is not allowed for this endpoint.",
+    "allowed_methods": [
+      "GET"
+    ]
+  }
 }
 ```
 
@@ -69,14 +105,28 @@ For anything that isn't GET
 If the client can't accept JSON
 ```json
 {
-	"message": "Only 'application/json' content type is supported"
+  "error": {
+    "code": 406,
+    "type": "Not Acceptable",
+    "message": "Requested content type is not supported",
+    "supported_types": [
+      "application/json"
+    ]
+  }
 }
 ```
 
 ### 429 Too Many Requests
-Gonna have to look into rate limiting...
+If the documents don't yet specify how rate limiting will work for this API,
+feel free to @ the author of these lines with your complaints.
 ```json
 {
-	"message": "Too many requests! Try again later."
+  "error": {
+    "code": 429,
+    "type": "Too Many Requests",
+    "message": "You have exceeded the allowed number of requests. Please try again later.",
+    "retry_after": 60,
+    "limit": 100
+  }
 }
 ```
