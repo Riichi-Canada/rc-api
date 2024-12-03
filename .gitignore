@@ -1,5 +1,5 @@
 # Database credentials
-db_config.py
+app/db_config.py
 testing.py
 
 # Byte-compiled / optimized / DLL files
