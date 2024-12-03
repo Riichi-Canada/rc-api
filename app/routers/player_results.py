@@ -5,11 +5,6 @@ router = APIRouter(
 )
 
 
-@router.get('')
-def get_clubs() -> Response:
-    return Response(status_code=501, content='This route has not yet been implemented')
-
-
 @router.get('/{player_id}')
 def get_club(player_id: int) -> Response:
     return Response(status_code=501, content='This route has not yet been implemented')
