@@ -407,17 +407,6 @@ If the client can't accept JSON
 }
 ```
 
-`online` is not either `true` or `false`
-```json
-{
-  "error": {
-    "code": 422,
-    "type": "Unprocessable Entity", 
-    "message": "'online' parameter value must be either true or false"
-  }
-}
-```
-
 ### 429 Too Many Requests
 If the documents don't yet specify how rate limiting will work for this API,
 feel free to @ the author of these lines with your complaints.
