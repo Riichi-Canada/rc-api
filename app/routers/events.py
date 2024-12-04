@@ -1,6 +1,6 @@
 import datetime
-
-from fastapi import APIRouter, Response
+from typing import Annotated
+from fastapi import APIRouter, Response, Query
 
 router = APIRouter(
     prefix='/api/v1/events'
@@ -9,7 +9,7 @@ router = APIRouter(
 
 @router.get('')
 def get_events(
-        event_region: int | None = None, event_type: int | None = None, event_city: str | None = None,
+        event_region: Annotated[list[int] | None, Query()] = None, event_type: int | None = None, event_city: str | None = None,
         event_country: str | None = None, online: bool | None = None, minimum_player_count: int = 1,
         from_date: datetime = datetime.date(2000, 1, 1), until_date: datetime = datetime.date.today(),
         page: int = 1, per_page: int = 100) -> Response:

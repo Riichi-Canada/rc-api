@@ -51,7 +51,7 @@ N/A
 - `https://riichi.ca/api/v1/events?page=2&per_page=50`
 - `https://riichi.ca/api/v1/events?online=false`
 - `https://riichi.ca/api/v1/events?event_region=1&minimum_player_count=32`
-- `https://riichi.ca/api/v1/events?event_region=1,2,3&from_date=2018-01-01`
+- `https://riichi.ca/api/v1/events?event_region=1&event_region=2&from_date=2018-01-01`
 - `https://riichi.ca/api/v1/events?event_country=Canada&event_type=1`
 
 ## Expected response
@@ -97,7 +97,7 @@ GET `https://riichi.ca/api/v1/events?page=2&per_page=50`
 
 HTTP 200
 
-GET `https://riichi.ca/api/v1/events?from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1,2,3,4,5`
+GET `https://riichi.ca/api/v1/events?from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1&event_region=2`
 ```json
 {
   "metadata":
@@ -111,9 +111,9 @@ GET `https://riichi.ca/api/v1/events?from_date=2022-01-01&until_date=2024-12-31&
     "page_count": 1,
     "total_count": 12,
     "links": [
-      {"self": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1,2,3,4,5"},
-      {"first": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1,2,3,4,5"},
-      {"last": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1,2,3,4,5"}
+      {"self": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1&event_region=2"},
+      {"first": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1&event_region=2"},
+      {"last": "/events?page=1&per_page=100&from_date=2022-01-01&until_date=2024-12-31&event_type=1&event_region=1&event_region=2"}
     ]
   },
   "records": [
