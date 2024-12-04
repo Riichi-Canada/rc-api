@@ -11,20 +11,25 @@ N/A
 N/A
 
 ## Example calls
-`https://riichi.ca/api/v1/players/1`
+`https://riichi.ca/api/v1/events/2024-010011`
 
 ## Expected return data
 HTTP 200
 
-GET `https://riichi.ca/api/v1/players/1`
+GET `https://riichi.ca/api/v1/events/2024-010011`
 ```json
 {
-  "id": 1,
-  "first_name": "Loïc",
-  "last_name": "Roberge",
-  "region": 1,
-  "club": 1,
-  "score_2025_cycle": 4937.11
+  "id": 51,
+  "event_id": "2024-010011",
+  "event_name": "Montréal Riichi Open 2024",
+  "event_region": 1,
+  "event_type": 1,
+  "event_start_date": "2024-06-01",
+  "event_end_date": "2024-06-02",
+  "event_city": "Montréal",
+  "event_country": "Canada",
+  "number_of_players": 32,
+  "is_online": false
 }
 ```
 
