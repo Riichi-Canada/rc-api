@@ -6,7 +6,7 @@ router = APIRouter(
 
 
 @router.get('')
-def get_players() -> Response:
+def get_players(score_limit_2025: int = 0, page: int = 1, per_page: int = 100) -> Response:
     return Response(status_code=501, content='This route has not yet been implemented')
 
 

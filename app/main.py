@@ -21,4 +21,4 @@ app.include_router(player_results_router)
 
 @app.get('/')
 def read_root() -> Response:
-    return Response(status_code=200, content='API is running')
+    return Response(status_code=200, content='Server is running')
