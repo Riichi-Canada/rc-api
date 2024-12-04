@@ -161,90 +161,90 @@ Request body is not empty
 }
 ```
 
-`page` is a non-integer, or below 1
+`page` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'page' parameter must be an integer greater than 0"
+    "message": "'page' parameter must be an integer"
   }
 }
 ```
 
-`per_page` is a non-integer, or below 1
+`per_page` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'per_page' parameter must be an integer greater than 0"
+    "message": "'per_page' parameter must be an integer"
   }
 }
 ```
 
-`event_region` is a non-integer, or below 1
+`event_region` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'event_region' parameter must be an integer greater than 0"
+    "message": "'event_region' parameter must be an integer"
   }
 }
 ```
 
-`event_type` is a non-integer, or below 1
+`event_type` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'event_type' parameter must be an integer greater than 0"
+    "message": "'event_type' parameter must be an integer"
   }
 }
 ```
 
-`from_date` is not a valid date, is before `2000-01-01`, or is in the future
+`from_date` is not a valid date
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'from_date' parameter must be a date between 2000-01-01 and today"
+    "message": "'from_date' parameter must be a date"
   }
 }
 ```
 
-`until_date` is not a valid date, is before `2000-01-01`, or is in the future
+`until_date` is not a valid date
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'until_date' parameter must be a date between 2000-01-01 and today"
+    "message": "'until_date' parameter must be a date"
   }
 }
 ```
 
-`minimum_player_count` is a non-integer, or is below 1
+`minimum_player_count` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'minimum_player_count' parameter must be an integer greater than 0"
+    "message": "'minimum_player_count' parameter must be an integer"
   }
 }
 ```
 
-`online` is not either `true` or `false`
+`online` is not a string
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'online' parameter value must be either true or false"
+    "message": "'online' parameter must be a string"
   }
 }
 ```
@@ -274,7 +274,6 @@ Provided API key is invalid
 
 ### 404 Not Found
 Client tries to go to page X+1 or greater when there are only X pages
-
 ```json
 {
   "error": {
@@ -286,7 +285,6 @@ Client tries to go to page X+1 or greater when there are only X pages
 ```
 
 No results for given parameters
-
 ```json
 {
   "error": {
@@ -327,6 +325,95 @@ If the client can't accept JSON
     "supported_types": [
       "application/json"
     ]
+  }
+}
+```
+
+### 422 Unprocessable Entity
+`page` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'page' parameter value must be greater than 0"
+  }
+}
+```
+
+`per_page` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'per_page' parameter value must be greater than 0"
+  }
+}
+```
+
+`event_region` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'event_region' parameter value must be greater than 0"
+  }
+}
+```
+
+`event_type` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'event_type' parameter value must be greater than 0"
+  }
+}
+```
+
+`from_date` is before `2000-01-01`, or is in the future
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'from_date' parameter value must be between 2000-01-01 and today"
+  }
+}
+```
+
+`until_date` is before `2000-01-01`, or is in the future
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'until_date' parameter value must be between 2000-01-01 and today"
+  }
+}
+```
+
+`minimum_player_count` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'minimum_player_count' parameter value must be greater than 0"
+  }
+}
+```
+
+`online` is not either `true` or `false`
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'online' parameter value must be either true or false"
   }
 }
 ```

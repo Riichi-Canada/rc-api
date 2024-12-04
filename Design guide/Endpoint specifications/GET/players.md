@@ -84,35 +84,35 @@ Request body is not empty
 }
 ```
 
-`page` is a non-integer, or below 1
+`page` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'page' parameter must be an integer greater than 0"
+    "message": "'page' parameter must be an integer"
   }
 }
 ```
 
-`per_page` is a non-integer, or below 1
+`per_page` is a non-integer
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'per_page' parameter must be an integer greater than 0"
+    "message": "'per_page' parameter must be an integer"
   }
 }
 ```
 
-`score_limit_2025` is not a number between 0 and 6000
+`score_limit_2025` is not a number
 ```json
 {
   "error": {
     "code": 400,
     "type": "Bad Request", 
-    "message": "'score_limit_2025' parameter must be a number between 0 and 6000"
+    "message": "'score_limit_2025' parameter must be a number"
   }
 }
 ```
@@ -189,6 +189,40 @@ If the client can't accept JSON
     "supported_types": [
       "application/json"
     ]
+  }
+}
+```
+
+### 422 Unprocessable Entity
+`page` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'page' parameter value must be greater than 0"
+  }
+}
+```
+
+`per_page` is below 1
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'per_page' parameter value must be greater than 0"
+  }
+}
+```
+
+`score_limit_2025` is not between 0 and 6000
+```json
+{
+  "error": {
+    "code": 422,
+    "type": "Unprocessable Entity", 
+    "message": "'score_limit_2025' parameter value must be between 0 and 6000"
   }
 }
 ```
