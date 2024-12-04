@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Response, Query
 
 router = APIRouter(
     prefix='/api/v1/players'
@@ -6,7 +8,8 @@ router = APIRouter(
 
 
 @router.get('')
-def get_players(score_limit_2025: int = 0, page: int = 1, per_page: int = 100) -> Response:
+def get_players(score_limit_2025: Annotated[float, Query(ge=0, le=6000)] = 0,
+                page: Annotated[int, Query(gt=0)] = 1, per_page: Annotated[int, Query(gt=0)] = 100) -> Response:
     return Response(status_code=501, content='This route has not yet been implemented')
 
 
