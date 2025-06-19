@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from db.database import Base, engine
+from app.db.database import Base, engine
 
 
 class Club(Base):

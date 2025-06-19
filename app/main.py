@@ -1,12 +1,12 @@
 from fastapi import FastAPI, status, Response
 
-from models import create_database
+from app.models import create_database
 
-from routers.clubs import router as clubs_router
-from routers.event_results import router as event_results_router
-from routers.events import router as events_router
-from routers.player_results import router as player_results_router
-from routers.players import router as players_router
+from app.routers.clubs import router as clubs_router
+from app.routers.event_results import router as event_results_router
+from app.routers.events import router as events_router
+from app.routers.player_results import router as player_results_router
+from app.routers.players import router as players_router
 
 
 create_database()
