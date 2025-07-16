@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.db.database import get_db
 from app.models import Club as ClubModel
+from app.authentication import validate_api_key
 
 router = APIRouter(
     prefix='/api/v1/clubs'
@@ -21,7 +22,7 @@ class Clubs(BaseModel):
 
 
 @router.get('', response_model=Clubs)
-async def get_clubs(db: Session = Depends(get_db)) -> Clubs:
+async def get_clubs(db: Session = Depends(get_db), _: str = Depends(validate_api_key)) -> Clubs:
     clubs = db.query(ClubModel).all()
     data = Clubs(
         records=[
@@ -32,7 +33,7 @@ async def get_clubs(db: Session = Depends(get_db)) -> Clubs:
 
 
 @router.get('/{club_id}', response_model=Club)
-async def get_club(club_id: int, db: Session = Depends(get_db)) -> Club:
+async def get_club(club_id: int, db: Session = Depends(get_db), _: str = Depends(validate_api_key)) -> Club:
     club = db.query(ClubModel).filter(ClubModel.id == club_id).first()
     if club is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No club with id {club_id}')
