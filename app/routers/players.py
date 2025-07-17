@@ -1,7 +1,7 @@
 import datetime as d
-from typing import Annotated, Any
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status, Depends, Query, Response
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -14,41 +14,37 @@ from app.models import EventScores2025 as EventScores2025Model
 from app.models import EventScores2028 as EventScores2028Model
 from app.models import PlayerScores2025 as PlayerScores2025Model
 from app.models import PlayerScores2028 as PlayerScores2028Model
+from app.models import Club as ClubModel
 from app.authentication import validate_api_key
+from app.pager import paginate
 
 router = APIRouter(
     prefix='/api/v1/players'
 )
 
 # region PyDantic Models
+class Club(BaseModel):
+    id: int
+    name: str
+    short_name: str
+
 class Player(BaseModel):
     id: int
     first_name: str
     last_name: str
     player_region: int
-    player_club: int | None
+    player_club: Club | None
     player_score_2025_cycle: float | None
     player_score_2028_cycle: float | None
     event_results: str
 
 class Players(BaseModel):
+    metadata: dict
     records: list[Player]
 
-class Result(BaseModel):
-    event_name: str
-    placement: int
-    score: float | None
-
 class Results (BaseModel):
-    records: list[Result]
-
-# class PlayerScores2025(BaseModel):
-#     id: int
-#     player_id: int
-#     total_score: float | None
-#
-# class Scores2025(BaseModel):
-#     records: list[PlayerScores2025]
+    metadata: dict
+    records: list[dict]
 
 # endregion PyDantic Models
 
@@ -57,25 +53,37 @@ class Results (BaseModel):
 async def get_players(
     _: str = Depends(validate_api_key),
     db: Session = Depends(get_db),
+    page: Annotated[int, Query(gt=0)] = 1,
+    per_page: Annotated[int, Query(gt=0)] = 100
 ) -> Players:
-    players = db.query(PlayerModel).order_by(asc(PlayerModel.id)).all()
+    query = db.query(PlayerModel).order_by(asc(PlayerModel.id))
 
-    data = Players(
-        records=[
+    paginated_data = paginate(query, 'players', page, per_page)
+
+    records = []
+
+    for player in paginated_data['records']:
+        club = db.query(ClubModel).filter(ClubModel.id == player.player_club).first()
+        player_club = None if player.player_club is None else Club(
+            id=club.id, name=club.club_name, short_name=club.club_short_name
+        )
+
+        records.append(
             Player(
                 id=player.id,
                 first_name=player.first_name,
                 last_name=player.last_name,
                 player_region=player.player_region,
-                player_club=player.player_club,
+                player_club=player_club,
                 player_score_2025_cycle=player.player_score_2025_cycle,
                 player_score_2028_cycle=player.player_score_2028_cycle,
                 event_results=f'/players/{player.id}/event_results'
-            ) for player in players
-        ]
-    )
+            )
+        )
 
-    return data
+    paginated_data['records'] = records
+
+    return paginated_data
 
 
 @router.get('/{player_id}')
@@ -88,12 +96,17 @@ async def get_player(
     if player is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No player with id {player_id}')
 
+    club = db.query(ClubModel).filter(ClubModel.id == player.player_club).first()
+    player_club = None if player.player_club is None else Club(
+        id=club.id, name=club.club_name, short_name=club.club_short_name
+    )
+
     data = Player(
         id=player.id,
         first_name=player.first_name,
         last_name=player.last_name,
         player_region=player.player_region,
-        player_club=player.player_club,
+        player_club=player_club,
         player_score_2025_cycle=player.player_score_2025_cycle,
         player_score_2028_cycle=player.player_score_2028_cycle,
         event_results=f'/players/{player_id}/event_results'
@@ -105,16 +118,23 @@ async def get_player(
 async def get_player_results(
     player_id: int,
     db: Session = Depends(get_db),
-    _: str = Depends(validate_api_key)
-) -> Any:
-    results = db.query(ResultModel).filter(ResultModel.player_id == player_id).all()
+    _: str = Depends(validate_api_key),
+    page: Annotated[int, Query(gt=0)] = 1,
+    per_page: Annotated[int, Query(gt=0)] = 100
+) -> Results:
+    query = db.query(ResultModel).filter(ResultModel.player_id == player_id)
 
-    if results is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No results found for player with id {player_id}')
+    if query.all() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'No results found for player with id {player_id}'
+        )
+
+    paginated_data = paginate(query, f'players/{player_id}/event_results', page, per_page)
 
     records = []
 
-    for result in results:
+    for result in paginated_data['records']:
         event = db.query(EventModel).filter(EventModel.id == result.event_id).first()
 
         if event.event_start_date >= d.date(2022, 1, 1) and event.event_end_date <= d.date(2024, 12, 31):
@@ -123,7 +143,7 @@ async def get_player_results(
 
             ranking_points = {
                 'main_points': event_rank_points.main_score,
-                'tank': event_rank_points.tank_score
+                'tank_points': event_rank_points.tank_score
             }
 
             player_scores = db.query(PlayerScores2025Model).filter(
@@ -192,4 +212,6 @@ async def get_player_results(
 
         records.append(result_data)
 
-    return records
+    paginated_data['records'] = records
+
+    return paginated_data
