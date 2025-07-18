@@ -136,8 +136,36 @@ def get_events(
 
 
 @router.get('/{event_id}')
-def get_event(event_id: int) -> Response:
-    return Response(status_code=HTTP_501_NOT_IMPLEMENTED, content='This route has not yet been implemented')
+def get_event(
+        event_id: int,
+        _: str = Depends(validate_api_key),
+        db: Session = Depends(get_db),
+) -> JSONResponse:
+    event = db.query(EventModel).filter(EventModel.id == event_id).first()
+    if event is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={'message': f'No event with id {event_id}'})
+
+    ruleset = db.query(RulesetModel).filter(RulesetModel.id == event.event_ruleset).first()
+    event_ruleset = Ruleset(id=ruleset.id, name=ruleset.name)
+
+    data = Event(
+        id=event.id,
+        event_code=event.event_code,
+        event_name=event.event_name,
+        event_region=event.event_region,
+        event_type=event.event_type,
+        event_start_date=event.event_start_date.strftime('%Y-%m-%d'),
+        event_end_date=event.event_end_date.strftime('%Y-%m-%d'),
+        event_city=event.event_city,
+        event_country=event.event_country,
+        number_of_players=event.number_of_players,
+        is_online=event.is_online,
+        event_ruleset=event_ruleset,
+        rule_modifications=event.rule_modifications,
+        event_notes=event.event_notes
+    ).model_dump()
+
+    return JSONResponse(status_code=HTTP_200_OK, content=data)
 
 
 @router.get('/{event_id}/results')
