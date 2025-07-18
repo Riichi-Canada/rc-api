@@ -20,13 +20,13 @@ def paginate(query, route: str, page: int, per_page: int) -> dict[str, Any]:
             'per_page': per_page,
             'page_count': page_count,
             'total_count': total_count,
-            'links': [
-                {'self': f'/{route}?page={page}&per_page={per_page}'},
-                {'first': f'/{route}?page=1&per_page={per_page}'},
-                {'previous': f'/{route}?page={max(1, page - 1)}&per_page={per_page}'},
-                {'next': f'/{route}?page={min(page + 1, page_count)}&per_page={per_page}'},
-                {'last': f'/{route}?page={page_count}&per_page={per_page}'}
-            ]
+            'links': {
+                'self': f'/{route}?page={page}&per_page={per_page}',
+                'first': f'/{route}?page=1&per_page={per_page}',
+                'previous': f'/{route}?page={max(1, page - 1)}&per_page={per_page}',
+                'next': f'/{route}?page={min(page + 1, page_count)}&per_page={per_page}',
+                'last': f'/{route}?page={page_count}&per_page={per_page}'
+            }
         }
     }
 
