@@ -1,4 +1,3 @@
-import datetime
 from typing import Annotated, Optional
 from fastapi import APIRouter, Response, Query
 from starlette.responses import JSONResponse
@@ -41,18 +40,19 @@ class Event(BaseModel):
     event_ruleset: Ruleset
     rule_modifications: str | None
     event_notes: str | None
+# endregion PyDantic Models
 
 
 @router.get('')
 def get_events(
-        event_region: Annotated[list[int] | None, Query(gt=0)] = None,
+        event_region: Annotated[list[int] | None, Query()] = None,
         event_type: Annotated[int | None, Query(gt=0)] = None,
         event_city: str | None = None,
         event_country: str | None = None,
         online: bool | None = None,
         minimum_player_count: Annotated[int, Query(gt=0)] = 1,
-        from_date: datetime.date = datetime.date(2000, 1, 1),
-        until_date: datetime.date = datetime.date.today(),
+        from_date: d.date = d.date(2000, 1, 1),
+        until_date: d.date = d.date.today(),
         page: Annotated[int, Query(gt=0)] = 1,
         per_page: Annotated[int, Query(gt=0)] = 100,
         _: str = Depends(validate_api_key),
@@ -60,7 +60,40 @@ def get_events(
 ) -> Response:
     query = db.query(EventModel).order_by(asc(EventModel.event_start_date))
 
-    paginated_data = paginate(query, 'events', page, per_page)
+    # region Handling query parameters
+    params_string = ''
+
+    if event_region:
+        query = query.filter(EventModel.event_region.in_(event_region))
+        params_string += '&event_region='
+        for region in event_region:
+            params_string += f'{region},'
+        params_string = params_string.rstrip(',')
+
+    if event_type:
+        query = query.filter(EventModel.event_type == event_type)
+        params_string += f'&event_type={event_type}'
+
+    if event_city:
+        query = query.filter(EventModel.event_city == event_city)
+        params_string += f'&event_city={event_city}'
+
+    if event_country:
+        query = query.filter(EventModel.event_country == event_country)
+        params_string += f'&event_country={event_country}'
+
+    if online is not None:
+        query = query.filter(EventModel.is_online == online)
+        params_string += f'&online={online}'
+
+    query = query.filter(EventModel.number_of_players >= minimum_player_count)
+    params_string += f'&minimum_player_count={minimum_player_count}'
+
+    query = query.filter(EventModel.event_end_date >= from_date, EventModel.event_end_date <= until_date)
+    params_string += f'&from_date={from_date}&until_date={until_date}'
+    # endregion Handling query parameters
+
+    paginated_data = paginate(query=query, route='events', page=page, per_page=per_page, extra_params=params_string)
 
     records = []
 
@@ -87,6 +120,16 @@ def get_events(
             ).model_dump()
         )
 
+    paginated_data['metadata']['filters'] = {
+        "event_region": event_region,
+        "event_type": event_type,
+        "event_city": event_city,
+        "event_country": event_country,
+        "online": online,
+        "minimum_player_count": minimum_player_count,
+        "from_date": from_date.strftime('%Y-%m-%d'),
+        "until_date": until_date.strftime('%Y-%m-%d'),
+    }
     paginated_data['records'] = records
 
     return JSONResponse(status_code=HTTP_200_OK, content=paginated_data)
