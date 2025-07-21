@@ -1,17 +1,20 @@
 from typing import Annotated, Optional
-from fastapi import APIRouter, Response, Query
-from starlette.responses import JSONResponse
-from starlette.status import HTTP_501_NOT_IMPLEMENTED, HTTP_200_OK
 import datetime as d
-from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status, Depends, Query
+from starlette.responses import JSONResponse
+from starlette.status import HTTP_200_OK
+from fastapi import APIRouter, status, Depends, Query, Response
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, conint
 
 from app.models import Event as EventModel
 from app.models import Ruleset as RulesetModel
+from app.models import EventResult as ResultModel
+from app.models import EventScores2025 as EventScores2025Model
+from app.models import EventScores2028 as EventScores2028Model
+from app.models import Club as ClubModel
+from app.models import Player as PlayerModel
 from app.authentication import validate_api_key
 from app.db.database import get_db
 from app.pager import paginate
@@ -40,6 +43,22 @@ class Event(BaseModel):
     event_ruleset: Ruleset
     rule_modifications: str | None
     event_notes: str | None
+    results: Optional[str]
+
+class EventResult(BaseModel):
+    placement: int
+    player_id: int | None
+    player_first_name: str
+    player_last_name: str
+    player_region: int | None
+    player_club: int | None
+    event_points: float
+    ranking_points: float | None
+
+class EventResults(BaseModel):
+    results: list[EventResult]
+    represented_regions: list
+    represented_clubs: list
 # endregion PyDantic Models
 
 
@@ -137,9 +156,9 @@ def get_events(
 
 @router.get('/{event_id}')
 def get_event(
-        event_id: int,
+        event_id: conint(gt=0),
         _: str = Depends(validate_api_key),
-        db: Session = Depends(get_db),
+        db: Session = Depends(get_db)
 ) -> JSONResponse:
     event = db.query(EventModel).filter(EventModel.id == event_id).first()
     if event is None:
@@ -162,12 +181,134 @@ def get_event(
         is_online=event.is_online,
         event_ruleset=event_ruleset,
         rule_modifications=event.rule_modifications,
-        event_notes=event.event_notes
+        event_notes=event.event_notes,
+        results=f'/events/{event_id}/results'
     ).model_dump()
 
     return JSONResponse(status_code=HTTP_200_OK, content=data)
 
 
 @router.get('/{event_id}/results')
-def get_event_results(event_id: int) -> Response:
-    return Response(status_code=HTTP_501_NOT_IMPLEMENTED, content='This route has not yet been implemented')
+def get_event_results(
+        event_id: conint(gt=0),
+        _: str = Depends(validate_api_key),
+        db: Session = Depends(get_db)
+) -> Response:
+    results_data = db.query(ResultModel).filter(ResultModel.event_id == event_id).order_by(asc(ResultModel.placement))
+
+    represented_regions = {}
+    represented_clubs = {}
+
+    results = []
+
+    for result in results_data:
+        # region Player info
+        player = db.query(PlayerModel).filter(PlayerModel.id == result.player_id).first()
+
+        player_region = player.player_region if player else None
+        player_club = player.player_club if player else None
+        # endregion Player info
+
+        # region Ranking points
+        if player:
+            event = db.query(EventModel).filter(EventModel.id == result.event_id).first()
+
+            if event.event_start_date >= d.date(2022, 1, 1) and event.event_end_date <= d.date(2024, 12, 31):
+                ranking_score_data = db.query(
+                    EventScores2025Model
+                ).filter(
+                    EventScores2025Model.result_id == result.id
+                ).first()
+
+                ranking_points = ranking_score_data.main_score + ranking_score_data.tank_score
+
+            elif event.event_start_date >= d.date(2025, 1, 1) and event.event_end_date <= d.date(2027, 12, 31):
+                ranking_score_data = db.query(
+                    EventScores2028Model
+                ).filter(
+                    EventScores2028Model.result_id == result.id
+                ).first()
+
+                ranking_points = ranking_score_data.part_a + ranking_score_data.part_b
+
+            else:
+                ranking_points = None
+        else:
+            ranking_points = None
+        # endregion Ranking points
+
+        # region Update represented_regions
+        if player_region in represented_regions:
+            represented_regions[player_region] += 1
+        else:
+            represented_regions[player_region] = 1
+        # endregion Update represented_regions
+
+        # region Update represented_clubs
+        if player_club is not None:
+            club = db.query(ClubModel).filter(ClubModel.id == player_club).first()
+            if club:
+                club_info = {
+                    'id': club.id,
+                    'name': club.club_name,
+                    'short_name': club.club_short_name
+                }
+                if club_info['id'] in represented_clubs:
+                    represented_clubs[club_info['id']]['number_of_occurences'] += 1
+                else:
+                    club_info['number_of_occurences'] = 1
+                    represented_clubs[club_info['id']] = club_info
+        # endregion Update represented_clubs
+
+        results.append(
+            EventResult(
+                placement=result.placement,
+                player_id=result.player_id,
+                player_first_name=result.player_first_name,
+                player_last_name=result.player_last_name,
+                player_region=player_region,
+                player_club=player_club,
+                event_points=result.score,
+                ranking_points=ranking_points
+            )
+        )
+
+    represented_regions = sorted(represented_regions.items(), key=lambda x: x[1], reverse=True)
+    represented_clubs = sorted(represented_clubs.values(), key=lambda x: x['number_of_occurences'], reverse=True)
+
+    represented_regions_sorted = [
+        {'region': region, 'number_of_occurences': count}
+        for region, count in represented_regions
+    ]
+    represented_clubs_sorted = [
+        {
+            'id': club['id'],
+            'name': club['name'],
+            'short_name': club['short_name'],
+            'number_of_occurences': club['number_of_occurences']
+        } for club in represented_clubs
+    ]
+
+    return_data = EventResults(
+        results=results, represented_regions=represented_regions_sorted, represented_clubs=represented_clubs_sorted
+    ).model_dump()
+
+    return JSONResponse(status_code=HTTP_200_OK, content=return_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
