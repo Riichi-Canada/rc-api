@@ -29,7 +29,7 @@ class Event(Base):
     event_region = Column(Integer)
     event_type = Column(Integer)
     event_start_date = Column(DateTime)
-    event_end_date = Column(DateTime)
+    event_end_date = Column(DateTime, index=True)
     event_city = Column(String)
     event_country = Column(String)
     number_of_players = Column(Integer)
@@ -94,6 +94,11 @@ class PlayerScores2028(Base):
     slot_4 = Column(Integer)
     slot_5 = Column(Integer)
 
+class Ruleset(Base):
+    __tablename__ = "rulesets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
 
 def create_database():
     Base.metadata.create_all(bind=engine)
